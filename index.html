@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="News Ticker">
+    <title>iPad News Ticker</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #ffffff;
+            --accent-color: #00ffff;
+            --separator-color: #333333;
+            --scroll-speed: 60s; /* Adjustable scroll speed */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Light mode */
+        body.light-mode {
+            --bg-color: #f5f5f5;
+            --text-color: #1a1a1a;
+            --accent-color: #0066cc;
+            --separator-color: #cccccc;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid var(--accent-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        body.light-mode .header {
+            background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 100%);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent-color);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header .timestamp {
+            font-size: 1em;
+            margin-top: 10px;
+            opacity: 0.8;
+            color: var(--text-color);
+        }
+
+        /* Ticker Container */
+        .ticker-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        /* Horizontal Ticker */
+        .ticker-horizontal {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            animation: scroll-horizontal var(--scroll-speed) linear infinite;
+            will-change: transform;
+        }
+
+        @keyframes scroll-horizontal {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            padding: 0 40px;
+            font-size: 2em;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .ticker-item:hover {
+            color: var(--accent-color);
+            transition: color 0.3s ease;
+        }
+
+        .ticker-item::after {
+            content: "•";
+            margin-left: 40px;
+            color: var(--accent-color);
+            font-size: 1.5em;
+        }
+
+        .ticker-item a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .ticker-item .source {
+            font-size: 0.6em;
+            opacity: 0.7;
+            margin-right: 15px;
+            padding: 5px 10px;
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border-radius: 5px;
+            font-weight: 700;
+        }
+
+        /* Footer Controls */
+        .footer {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 3px solid var(--accent-color);
+            flex-wrap: wrap;
+        }
+
+        body.light-mode .footer {
+            background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 100%);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 255, 255, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .opml-button {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+
+        .opml-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 255, 255, 0.3);
+        }
+
+        .opml-button input[type="file"] {
+            display: none;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .speed-control label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        input[type="range"] {
+            width: 150px;
+            cursor: pointer;
+        }
+
+        .status {
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments for iPad */
+        @media screen and (max-width: 1024px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .ticker-item {
+                font-size: 1.5em;
+            }
+            
+            .controls {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .ticker-item {
+                font-size: 1.2em;
+            }
+            
+            .footer {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>📰 Live News Ticker</h1>
+        <div class="timestamp" id="timestamp">Loading...</div>
+    </div>
+
+    <!-- Ticker Container -->
+    <div class="ticker-container">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Loading news feeds...</div>
+        </div>
+        <div class="ticker-horizontal" id="ticker"></div>
+    </div>
+
+    <!-- Footer Controls -->
+    <div class="footer">
+        <div class="controls">
+            <button id="themeToggle">🌓 Toggle Theme</button>
+            <button id="pausePlay">⏸️ Pause</button>
+            <button id="refreshBtn">🔄 Refresh</button>
+            <label for="opmlUpload" class="opml-button" title="Import OPML file from your RSS reader">
+                📥 Import OPML
+                <input type="file" id="opmlUpload" accept=".opml,.xml">
+            </label>
+        </div>
+        
+        <div class="speed-control">
+            <label for="speedSlider">Speed:</label>
+            <input type="range" id="speedSlider" min="20" max="120" value="60" step="10">
+            <span id="speedValue">60s</span>
+        </div>
+        
+        <div class="status" id="status">Initializing...</div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            feeds: [
+                // Placeholder RSS feeds - replace with your own
+                'https://feeds.bbci.co.uk/news/rss.xml',
+                'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
+                'https://feeds.npr.org/1001/rss.xml',
+                'https://www.theguardian.com/world/rss',
+                'https://www.wired.com/feed/rss'
+            ],
+            refreshInterval: 10 * 60 * 1000, // 10 minutes
+            corsProxy: 'https://api.allorigins.win/raw?url=' // CORS proxy for RSS feeds
+        };
+
+        // State
+        let isPaused = false;
+        let headlines = [];
+        let refreshTimer = null;
+
+        // DOM Elements
+        const ticker = document.getElementById('ticker');
+        const loading = document.getElementById('loading');
+        const timestamp = document.getElementById('timestamp');
+        const status = document.getElementById('status');
+        const themeToggle = document.getElementById('themeToggle');
+        const pausePlayBtn = document.getElementById('pausePlay');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const opmlUpload = document.getElementById('opmlUpload');
+
+        // Parse OPML file and extract feed URLs
+        function parseOPML(opmlText) {
+            try {
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(opmlText, 'text/xml');
+                
+                // Check for parsing errors
+                const parserError = xml.querySelector('parsererror');
+                if (parserError) {
+                    throw new Error('OPML parsing error');
+                }
+
+                // Extract feed URLs from outline elements
+                const outlines = xml.querySelectorAll('outline[xmlUrl], outline[xmlurl]');
+                const feedUrls = [];
+                
+                outlines.forEach(outline => {
+                    const feedUrl = outline.getAttribute('xmlUrl') || outline.getAttribute('xmlurl');
+                    const title = outline.getAttribute('title') || outline.getAttribute('text');
+                    
+                    if (feedUrl) {
+                        feedUrls.push(feedUrl);
+                        console.log(`Found feed: ${title || 'Untitled'} - ${feedUrl}`);
+                    }
+                });
+
+                return feedUrls;
+            } catch (error) {
+                console.error('Error parsing OPML:', error);
+                return [];
+            }
+        }
+
+        // Handle OPML file upload
+        opmlUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            status.textContent = 'Reading OPML file...';
+            
+            try {
+                const text = await file.text();
+                const feedUrls = parseOPML(text);
+                
+                if (feedUrls.length === 0) {
+                    status.textContent = 'No feeds found in OPML file';
+                    alert('No RSS feeds found in the OPML file. Please check the file format.');
+                    return;
+                }
+
+                // Update CONFIG with new feeds
+                CONFIG.feeds = feedUrls;
+                
+                // Save to localStorage for persistence
+                localStorage.setItem('rssFeeds', JSON.stringify(feedUrls));
+                
+                status.textContent = `Imported ${feedUrls.length} feeds from OPML`;
+                alert(`Successfully imported ${feedUrls.length} RSS feeds!\n\nThe page will now refresh to load your feeds.`);
+                
+                // Reload feeds
+                await fetchAllFeeds();
+                
+            } catch (error) {
+                console.error('Error reading OPML file:', error);
+                status.textContent = 'Error reading OPML file';
+                alert('Error reading OPML file. Please make sure it\'s a valid OPML file.');
+            }
+            
+            // Reset file input
+            e.target.value = '';
+        });
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            timestamp.textContent = now.toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Fetch RSS feed
+        async function fetchRSSFeed(feedUrl) {
+            try {
+                const response = await fetch(CONFIG.corsProxy + encodeURIComponent(feedUrl));
+                const text = await response.text();
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(text, 'text/xml');
+                
+                // Check for parsing errors
+                const parserError = xml.querySelector('parsererror');
+                if (parserError) {
+                    throw new Error('XML parsing error');
+                }
+
+                // Extract headlines (supports both RSS and Atom formats)
+                const items = xml.querySelectorAll('item, entry');
+                const feedTitle = xml.querySelector('channel > title, feed > title')?.textContent || 'News';
+                
+                const headlines = [];
+                items.forEach(item => {
+                    const title = item.querySelector('title')?.textContent;
+                    const link = item.querySelector('link')?.textContent || 
+                                item.querySelector('link')?.getAttribute('href');
+                    
+                    if (title) {
+                        headlines.push({
+                            title: title.trim(),
+                            link: link || '#',
+                            source: feedTitle.trim()
+                        });
+                    }
+                });
+
+                return headlines;
+            } catch (error) {
+                console.error(`Error fetching feed ${feedUrl}:`, error);
+                return [];
+            }
+        }
+
+        // Fetch all feeds
+        async function fetchAllFeeds() {
+            status.textContent = 'Fetching feeds...';
+            loading.style.display = 'block';
+            
+            const allHeadlines = [];
+            
+            // Fetch all feeds in parallel
+            const results = await Promise.allSettled(
+                CONFIG.feeds.map(feed => fetchRSSFeed(feed))
+            );
+            
+            results.forEach(result => {
+                if (result.status === 'fulfilled' && result.value.length > 0) {
+                    allHeadlines.push(...result.value);
+                }
+            });
+
+            if (allHeadlines.length === 0) {
+                // Fallback headlines if no feeds load
+                allHeadlines.push(
+                    { title: 'Welcome to your iPad News Ticker!', source: 'System', link: '#' },
+                    { title: 'Configure your RSS feeds by editing the CONFIG.feeds array', source: 'System', link: '#' },
+                    { title: 'Headlines will scroll continuously once loaded', source: 'System', link: '#' }
+                );
+            }
+
+            headlines = allHeadlines;
+            renderTicker();
+            loading.style.display = 'none';
+            status.textContent = `Loaded ${headlines.length} headlines from ${CONFIG.feeds.length} feeds`;
+            updateTimestamp();
+        }
+
+        // Render ticker
+        function renderTicker() {
+            // Duplicate headlines for seamless loop
+            const duplicatedHeadlines = [...headlines, ...headlines];
+            
+            ticker.innerHTML = duplicatedHeadlines.map(item => `
+                <div class="ticker-item">
+                    <span class="source">${item.source}</span>
+                    <a href="${item.link}" target="_blank" rel="noopener noreferrer">
+                        ${item.title}
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        // Theme toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+        });
+
+        // Pause/Play toggle
+        pausePlayBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            ticker.style.animationPlayState = isPaused ? 'paused' : 'running';
+            pausePlayBtn.textContent = isPaused ? '▶️ Play' : '⏸️ Pause';
+        });
+
+        // Refresh feeds
+        refreshBtn.addEventListener('click', () => {
+            fetchAllFeeds();
+        });
+
+        // Speed control
+        speedSlider.addEventListener('input', (e) => {
+            const speed = e.target.value;
+            speedValue.textContent = `${speed}s`;
+            document.documentElement.style.setProperty('--scroll-speed', `${speed}s`);
+            localStorage.setItem('scrollSpeed', speed);
+        });
+
+        // Auto-refresh feeds
+        function startAutoRefresh() {
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(() => {
+                if (!isPaused) {
+                    fetchAllFeeds();
+                }
+            }, CONFIG.refreshInterval);
+        }
+
+        // Initialize
+        async function init() {
+            // Restore saved feeds from localStorage
+            const savedFeeds = localStorage.getItem('rssFeeds');
+            if (savedFeeds) {
+                try {
+                    CONFIG.feeds = JSON.parse(savedFeeds);
+                    console.log(`Loaded ${CONFIG.feeds.length} feeds from localStorage`);
+                } catch (error) {
+                    console.error('Error loading saved feeds:', error);
+                }
+            }
+
+            // Restore theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+            }
+
+            // Restore scroll speed
+            const savedSpeed = localStorage.getItem('scrollSpeed');
+            if (savedSpeed) {
+                speedSlider.value = savedSpeed;
+                speedValue.textContent = `${savedSpeed}s`;
+                document.documentElement.style.setProperty('--scroll-speed', `${savedSpeed}s`);
+            }
+
+            // Update timestamp every minute
+            updateTimestamp();
+            setInterval(updateTimestamp, 60000);
+
+            // Load feeds
+            await fetchAllFeeds();
+
+            // Start auto-refresh
+            startAutoRefresh();
+        }
+
+        // Prevent accidental zoom on iPad
+        document.addEventListener('gesturestart', (e) => {
+            e.preventDefault();
+        });
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
