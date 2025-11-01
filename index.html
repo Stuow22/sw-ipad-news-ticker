@@ -20,7 +20,7 @@
             --text-color: #ffffff;
             --accent-color: #00ffff;
             --separator-color: #333333;
-            --scroll-speed: 300s; /* Adjustable scroll speed */
+            --scroll-speed: 600s; /* Adjustable scroll speed */
         }
 
         body {
@@ -103,6 +103,26 @@
             padding-bottom: 40px;
         }
 
+        /* Individual feed tickers - even more in background */
+        .ticker-feed {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .ticker-feed-1 { top: 10%; align-items: flex-start; }
+        .ticker-feed-2 { top: 20%; align-items: flex-start; }
+        .ticker-feed-3 { top: 30%; align-items: flex-start; }
+        .ticker-feed-4 { top: 40%; align-items: flex-start; }
+        .ticker-feed-5 { bottom: 40%; align-items: flex-end; }
+        .ticker-feed-6 { bottom: 30%; align-items: flex-end; }
+        .ticker-feed-7 { bottom: 20%; align-items: flex-end; }
+        .ticker-feed-8 { bottom: 10%; align-items: flex-end; }
+
         /* Main Ticker Layer */
         .ticker-main {
             position: relative;
@@ -124,6 +144,17 @@
         /* Adjust bottom ticker speed - Daily Mail has more content */
         .ticker-background-bottom .ticker-horizontal {
             animation-duration: calc(var(--scroll-speed) * 3);
+        }
+
+        /* Individual feed tickers - very slow */
+        .ticker-feed .ticker-horizontal {
+            animation-duration: 600s;
+        }
+
+        /* Make feed ticker items smaller */
+        .ticker-feed .ticker-item {
+            font-size: 1.2em;
+            font-weight: 300;
         }
 
         @keyframes scroll-horizontal {
@@ -341,6 +372,31 @@
             <div class="spinner"></div>
             <div>Loading news feeds...</div>
         </div>
+        <!-- Individual feed tickers (deepest background) -->
+        <div class="ticker-feed ticker-feed-1">
+            <div class="ticker-horizontal" id="ticker-feed-1"></div>
+        </div>
+        <div class="ticker-feed ticker-feed-2">
+            <div class="ticker-horizontal" id="ticker-feed-2"></div>
+        </div>
+        <div class="ticker-feed ticker-feed-3">
+            <div class="ticker-horizontal" id="ticker-feed-3"></div>
+        </div>
+        <div class="ticker-feed ticker-feed-4">
+            <div class="ticker-horizontal" id="ticker-feed-4"></div>
+        </div>
+        <div class="ticker-feed ticker-feed-5">
+            <div class="ticker-horizontal" id="ticker-feed-5"></div>
+        </div>
+        <div class="ticker-feed ticker-feed-6">
+            <div class="ticker-horizontal" id="ticker-feed-6"></div>
+        </div>
+        <div class="ticker-feed ticker-feed-7">
+            <div class="ticker-horizontal" id="ticker-feed-7"></div>
+        </div>
+        <div class="ticker-feed ticker-feed-8">
+            <div class="ticker-horizontal" id="ticker-feed-8"></div>
+        </div>
         <!-- Background ticker - top -->
         <div class="ticker-background ticker-background-top">
             <div class="ticker-horizontal" id="ticker-bg-top"></div>
@@ -369,8 +425,8 @@
         
         <div class="speed-control">
             <label for="speedSlider">Speed:</label>
-            <input type="range" id="speedSlider" min="60" max="600" value="300" step="20">
-            <span id="speedValue">300s</span>
+            <input type="range" id="speedSlider" min="60" max="1800" value="600" step="60">
+            <span id="speedValue">600s</span>
         </div>
         
         <div class="status" id="status">Initializing...</div>
@@ -397,12 +453,23 @@
         // State
         let isPaused = false;
         let headlines = [];
+        let feedHeadlines = []; // Store headlines grouped by feed
         let refreshTimer = null;
 
         // DOM Elements
         const ticker = document.getElementById('ticker');
         const tickerBgTop = document.getElementById('ticker-bg-top');
         const tickerBgBottom = document.getElementById('ticker-bg-bottom');
+        const tickerFeeds = [
+            document.getElementById('ticker-feed-1'),
+            document.getElementById('ticker-feed-2'),
+            document.getElementById('ticker-feed-3'),
+            document.getElementById('ticker-feed-4'),
+            document.getElementById('ticker-feed-5'),
+            document.getElementById('ticker-feed-6'),
+            document.getElementById('ticker-feed-7'),
+            document.getElementById('ticker-feed-8')
+        ];
         const loading = document.getElementById('loading');
         const timestamp = document.getElementById('timestamp');
         const status = document.getElementById('status');
@@ -549,15 +616,19 @@
             loading.style.display = 'block';
             
             const allHeadlines = [];
+            feedHeadlines = []; // Reset feed-specific headlines
             
             // Fetch all feeds in parallel
             const results = await Promise.allSettled(
                 CONFIG.feeds.map(feed => fetchRSSFeed(feed))
             );
             
-            results.forEach(result => {
+            results.forEach((result, index) => {
                 if (result.status === 'fulfilled' && result.value.length > 0) {
                     allHeadlines.push(...result.value);
+                    feedHeadlines[index] = result.value; // Store by feed index
+                } else {
+                    feedHeadlines[index] = []; // Empty array for failed feeds
                 }
             });
 
@@ -616,6 +687,17 @@
             ticker.innerHTML = renderTickerContent(safeMainHeadlines);
             tickerBgTop.innerHTML = renderTickerContent(safeTopHeadlines);
             tickerBgBottom.innerHTML = renderTickerContent(safeBottomHeadlines);
+            
+            // Populate individual feed tickers (up to 8 feeds, excluding Daily Mail at index 7)
+            feedHeadlines.forEach((feedHeads, index) => {
+                if (index < 8 && index !== 7 && tickerFeeds[index]) {
+                    const content = feedHeads.length > 0 ? feedHeads : headlines.slice(0, 5);
+                    tickerFeeds[index].innerHTML = renderTickerContent(content);
+                } else if (index === 7 && tickerFeeds[index]) {
+                    // Clear Daily Mail feed ticker
+                    tickerFeeds[index].innerHTML = '';
+                }
+            });
         }
 
         // Theme toggle
@@ -631,6 +713,9 @@
             ticker.style.animationPlayState = playState;
             tickerBgTop.style.animationPlayState = playState;
             tickerBgBottom.style.animationPlayState = playState;
+            tickerFeeds.forEach(feed => {
+                feed.style.animationPlayState = playState;
+            });
             pausePlayBtn.textContent = isPaused ? '▶️ Play' : '⏸️ Pause';
         });
 
