@@ -89,6 +89,12 @@
             display: flex;
             align-items: center;
             opacity: 0.3;
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        .ticker-background .ticker-item a {
+            pointer-events: auto;
         }
 
         .ticker-background-top {
@@ -111,7 +117,12 @@
             display: flex;
             align-items: center;
             opacity: 0.15;
+            z-index: 1;
             pointer-events: none;
+        }
+        
+        .ticker-feed .ticker-item a {
+            pointer-events: auto;
         }
 
         .ticker-feed-1 { top: 10%; align-items: flex-start; }
@@ -130,6 +141,11 @@
             width: 100%;
             display: flex;
             align-items: center;
+            pointer-events: none;
+        }
+        
+        .ticker-main .ticker-item a {
+            pointer-events: auto;
         }
 
         /* Horizontal Ticker */
@@ -561,7 +577,8 @@
                 month: 'long',
                 day: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                hour12: false
             });
         }
 
