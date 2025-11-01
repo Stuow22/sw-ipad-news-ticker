@@ -20,7 +20,7 @@
             --text-color: #ffffff;
             --accent-color: #00ffff;
             --separator-color: #333333;
-            --scroll-speed: 60s; /* Adjustable scroll speed */
+            --scroll-speed: 300s; /* Adjustable scroll speed */
         }
 
         body {
@@ -81,6 +81,37 @@
             padding: 20px 0;
         }
 
+        /* Background Ticker Layer */
+        .ticker-background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            opacity: 0.3;
+        }
+
+        .ticker-background-top {
+            top: 0;
+            align-items: flex-start;
+            padding-top: 40px;
+        }
+
+        .ticker-background-bottom {
+            bottom: 0;
+            align-items: flex-end;
+            padding-bottom: 40px;
+        }
+
+        /* Main Ticker Layer */
+        .ticker-main {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+
         /* Horizontal Ticker */
         .ticker-horizontal {
             display: flex;
@@ -88,6 +119,11 @@
             white-space: nowrap;
             animation: scroll-horizontal var(--scroll-speed) linear infinite;
             will-change: transform;
+        }
+
+        /* Adjust bottom ticker speed - Daily Mail has more content */
+        .ticker-background-bottom .ticker-horizontal {
+            animation-duration: calc(var(--scroll-speed) * 3);
         }
 
         @keyframes scroll-horizontal {
@@ -106,6 +142,18 @@
             font-size: 2em;
             font-weight: 500;
             color: var(--text-color);
+        }
+
+        /* Main ticker - larger font */
+        .ticker-main .ticker-item {
+            font-size: 2.8em;
+            font-weight: 600;
+        }
+
+        /* Background tickers - smaller font */
+        .ticker-background .ticker-item {
+            font-size: 1.5em;
+            font-weight: 400;
         }
 
         .ticker-item:hover {
@@ -293,7 +341,18 @@
             <div class="spinner"></div>
             <div>Loading news feeds...</div>
         </div>
-        <div class="ticker-horizontal" id="ticker"></div>
+        <!-- Background ticker - top -->
+        <div class="ticker-background ticker-background-top">
+            <div class="ticker-horizontal" id="ticker-bg-top"></div>
+        </div>
+        <!-- Main ticker - center -->
+        <div class="ticker-main">
+            <div class="ticker-horizontal" id="ticker"></div>
+        </div>
+        <!-- Background ticker - bottom -->
+        <div class="ticker-background ticker-background-bottom">
+            <div class="ticker-horizontal" id="ticker-bg-bottom"></div>
+        </div>
     </div>
 
     <!-- Footer Controls -->
@@ -310,8 +369,8 @@
         
         <div class="speed-control">
             <label for="speedSlider">Speed:</label>
-            <input type="range" id="speedSlider" min="20" max="120" value="60" step="10">
-            <span id="speedValue">60s</span>
+            <input type="range" id="speedSlider" min="60" max="600" value="300" step="20">
+            <span id="speedValue">300s</span>
         </div>
         
         <div class="status" id="status">Initializing...</div>
@@ -322,11 +381,14 @@
         const CONFIG = {
             feeds: [
                 // Placeholder RSS feeds - replace with your own
-                'https://feeds.bbci.co.uk/news/rss.xml',
-                'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
-                'https://feeds.npr.org/1001/rss.xml',
-                'https://www.theguardian.com/world/rss',
-                'https://www.wired.com/feed/rss'
+                'https://azure.status.microsoft/en-us/status/feed/',
+                'https://www.bleepingcomputer.com/feed/',
+                'https://build5nines.com/feed/',
+                'https://www.ciraltos.com/feed/',
+                'https://github.blog/changelog/label/copilot/feed/',
+                'https://azure.microsoft.com/en-us/blog/feed/',
+                'https://rcpmag.com/rss-feeds/news.aspx',
+                'https://www.dailymail.co.uk/articles.rss'
             ],
             refreshInterval: 10 * 60 * 1000, // 10 minutes
             corsProxy: 'https://api.allorigins.win/raw?url=' // CORS proxy for RSS feeds
@@ -339,6 +401,8 @@
 
         // DOM Elements
         const ticker = document.getElementById('ticker');
+        const tickerBgTop = document.getElementById('ticker-bg-top');
+        const tickerBgBottom = document.getElementById('ticker-bg-bottom');
         const loading = document.getElementById('loading');
         const timestamp = document.getElementById('timestamp');
         const status = document.getElementById('status');
@@ -457,12 +521,17 @@
                     const title = item.querySelector('title')?.textContent;
                     const link = item.querySelector('link')?.textContent || 
                                 item.querySelector('link')?.getAttribute('href');
+                    // Get publication date (RSS uses pubDate, Atom uses published or updated)
+                    const pubDateText = item.querySelector('pubDate, published, updated')?.textContent;
+                    const pubDate = pubDateText ? new Date(pubDateText) : new Date(0);
                     
                     if (title) {
                         headlines.push({
                             title: title.trim(),
                             link: link || '#',
-                            source: feedTitle.trim()
+                            source: feedTitle.trim(),
+                            pubDate: pubDate,
+                            feedUrl: feedUrl  // Store the feed URL
                         });
                     }
                 });
@@ -495,11 +564,14 @@
             if (allHeadlines.length === 0) {
                 // Fallback headlines if no feeds load
                 allHeadlines.push(
-                    { title: 'Welcome to your iPad News Ticker!', source: 'System', link: '#' },
-                    { title: 'Configure your RSS feeds by editing the CONFIG.feeds array', source: 'System', link: '#' },
-                    { title: 'Headlines will scroll continuously once loaded', source: 'System', link: '#' }
+                    { title: 'Welcome to your iPad News Ticker!', source: 'System', link: '#', pubDate: new Date() },
+                    { title: 'Configure your RSS feeds by editing the CONFIG.feeds array', source: 'System', link: '#', pubDate: new Date() },
+                    { title: 'Headlines will scroll continuously once loaded', source: 'System', link: '#', pubDate: new Date() }
                 );
             }
+
+            // Sort headlines by publication date (newest first)
+            allHeadlines.sort((a, b) => b.pubDate - a.pubDate);
 
             headlines = allHeadlines;
             renderTicker();
@@ -510,17 +582,40 @@
 
         // Render ticker
         function renderTicker() {
-            // Duplicate headlines for seamless loop
-            const duplicatedHeadlines = [...headlines, ...headlines];
+            if (headlines.length === 0) return;
             
-            ticker.innerHTML = duplicatedHeadlines.map(item => `
-                <div class="ticker-item">
-                    <span class="source">${item.source}</span>
-                    <a href="${item.link}" target="_blank" rel="noopener noreferrer">
-                        ${item.title}
-                    </a>
-                </div>
-            `).join('');
+            // Separate Daily Mail headlines from others based on feed URL
+            const dailyMailHeadlines = headlines.filter(h => h.feedUrl === 'https://www.dailymail.co.uk/articles.rss');
+            const otherHeadlines = headlines.filter(h => h.feedUrl !== 'https://www.dailymail.co.uk/articles.rss');
+            
+            console.log(`Daily Mail headlines: ${dailyMailHeadlines.length}, Other headlines: ${otherHeadlines.length}`);
+            
+            // Split other headlines between main and top tickers
+            const mainHeadlines = otherHeadlines.filter((_, index) => index % 2 === 0);
+            const topHeadlines = otherHeadlines.filter((_, index) => index % 2 === 1);
+            
+            // Use Daily Mail for bottom, ensure we have content for all layers
+            const safeMainHeadlines = mainHeadlines.length > 0 ? mainHeadlines : otherHeadlines.length > 0 ? otherHeadlines : headlines;
+            const safeTopHeadlines = topHeadlines.length > 0 ? topHeadlines : otherHeadlines.length > 0 ? otherHeadlines : headlines;
+            const safeBottomHeadlines = dailyMailHeadlines.length > 0 ? dailyMailHeadlines : headlines;
+            
+            // Duplicate headlines for seamless loop
+            const renderTickerContent = (headlineArray) => {
+                const duplicated = [...headlineArray, ...headlineArray];
+                return duplicated.map(item => `
+                    <div class="ticker-item">
+                        <span class="source">${item.source}</span>
+                        <a href="${item.link}" target="_blank" rel="noopener noreferrer">
+                            ${item.title}
+                        </a>
+                    </div>
+                `).join('');
+            };
+            
+            // Populate all three ticker layers
+            ticker.innerHTML = renderTickerContent(safeMainHeadlines);
+            tickerBgTop.innerHTML = renderTickerContent(safeTopHeadlines);
+            tickerBgBottom.innerHTML = renderTickerContent(safeBottomHeadlines);
         }
 
         // Theme toggle
@@ -532,7 +627,10 @@
         // Pause/Play toggle
         pausePlayBtn.addEventListener('click', () => {
             isPaused = !isPaused;
-            ticker.style.animationPlayState = isPaused ? 'paused' : 'running';
+            const playState = isPaused ? 'paused' : 'running';
+            ticker.style.animationPlayState = playState;
+            tickerBgTop.style.animationPlayState = playState;
+            tickerBgBottom.style.animationPlayState = playState;
             pausePlayBtn.textContent = isPaused ? '▶️ Play' : '⏸️ Pause';
         });
 
