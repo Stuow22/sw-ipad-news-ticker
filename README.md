@@ -1,0 +1,1 @@
+# sw-ipad-news-ticker
