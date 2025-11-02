@@ -1,0 +1,19 @@
+{
+  "feeds": [
+    "https://azure.status.microsoft/en-us/status/feed/",
+    "https://www.bleepingcomputer.com/feed/",
+    "https://build5nines.com/feed/",
+    "https://www.ciraltos.com/feed/",
+    "https://github.blog/changelog/label/copilot/feed/",
+    "https://azure.microsoft.com/en-us/blog/feed/",
+    "https://rcpmag.com/rss-feeds/news.aspx",
+    "https://www.dailymail.co.uk/articles.rss",
+    "http://feeds.arstechnica.com/arstechnica/index/",
+    "https://technology.blog.gov.uk/feed/",
+    "http://feeds.feedburner.com/TechDigest",
+    "https://www.computerworld.com/feed/"
+  ],
+  "dailyMailUrl": "https://www.dailymail.co.uk/articles.rss",
+  "refreshInterval": 600000,
+  "corsProxy": "https://api.allorigins.win/raw?url="
+}

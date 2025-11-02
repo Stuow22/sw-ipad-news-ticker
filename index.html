@@ -107,6 +107,7 @@
             bottom: 0;
             align-items: flex-end;
             padding-bottom: 40px;
+            opacity: 0.6;
         }
 
         /* Individual feed tickers - even more in background */
@@ -124,15 +125,6 @@
         .ticker-feed .ticker-item a {
             pointer-events: auto;
         }
-
-        .ticker-feed-1 { top: 10%; align-items: flex-start; }
-        .ticker-feed-2 { top: 20%; align-items: flex-start; }
-        .ticker-feed-3 { top: 30%; align-items: flex-start; }
-        .ticker-feed-4 { top: 40%; align-items: flex-start; }
-        .ticker-feed-5 { bottom: 40%; align-items: flex-end; }
-        .ticker-feed-6 { bottom: 30%; align-items: flex-end; }
-        .ticker-feed-7 { bottom: 20%; align-items: flex-end; }
-        .ticker-feed-8 { bottom: 10%; align-items: flex-end; }
 
         /* Main Ticker Layer */
         .ticker-main {
@@ -153,18 +145,27 @@
             display: flex;
             align-items: center;
             white-space: nowrap;
-            animation: scroll-horizontal var(--scroll-speed) linear infinite;
             will-change: transform;
+        }
+
+        /* Main ticker - fixed speed */
+        .ticker-main .ticker-horizontal {
+            animation: scroll-horizontal 50s linear infinite;
+        }
+
+        /* Top ticker - fixed speed */
+        .ticker-background-top .ticker-horizontal {
+            animation: scroll-horizontal 60s linear infinite;
         }
 
         /* Adjust bottom ticker speed - Daily Mail has more content */
         .ticker-background-bottom .ticker-horizontal {
-            animation-duration: calc(var(--scroll-speed) * 3);
+            animation: scroll-horizontal 1500s linear infinite;
         }
 
         /* Individual feed tickers - very slow */
         .ticker-feed .ticker-horizontal {
-            animation-duration: 600s;
+            animation: scroll-horizontal 900s linear infinite;
         }
 
         /* Make feed ticker items smaller */
@@ -383,36 +384,12 @@
     </div>
 
     <!-- Ticker Container -->
-    <div class="ticker-container">
+    <div class="ticker-container" id="ticker-container">
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <div>Loading news feeds...</div>
         </div>
-        <!-- Individual feed tickers (deepest background) -->
-        <div class="ticker-feed ticker-feed-1">
-            <div class="ticker-horizontal" id="ticker-feed-1"></div>
-        </div>
-        <div class="ticker-feed ticker-feed-2">
-            <div class="ticker-horizontal" id="ticker-feed-2"></div>
-        </div>
-        <div class="ticker-feed ticker-feed-3">
-            <div class="ticker-horizontal" id="ticker-feed-3"></div>
-        </div>
-        <div class="ticker-feed ticker-feed-4">
-            <div class="ticker-horizontal" id="ticker-feed-4"></div>
-        </div>
-        <div class="ticker-feed ticker-feed-5">
-            <div class="ticker-horizontal" id="ticker-feed-5"></div>
-        </div>
-        <div class="ticker-feed ticker-feed-6">
-            <div class="ticker-horizontal" id="ticker-feed-6"></div>
-        </div>
-        <div class="ticker-feed ticker-feed-7">
-            <div class="ticker-horizontal" id="ticker-feed-7"></div>
-        </div>
-        <div class="ticker-feed ticker-feed-8">
-            <div class="ticker-horizontal" id="ticker-feed-8"></div>
-        </div>
+        <!-- Individual feed tickers will be dynamically generated here -->
         <!-- Background ticker - top -->
         <div class="ticker-background ticker-background-top">
             <div class="ticker-horizontal" id="ticker-bg-top"></div>
@@ -449,43 +426,65 @@
     </div>
 
     <script>
-        // Configuration
+        // Configuration - feeds will be loaded from feeds.json
         const CONFIG = {
-            feeds: [
-                // Placeholder RSS feeds - replace with your own
-                'https://azure.status.microsoft/en-us/status/feed/',
-                'https://www.bleepingcomputer.com/feed/',
-                'https://build5nines.com/feed/',
-                'https://www.ciraltos.com/feed/',
-                'https://github.blog/changelog/label/copilot/feed/',
-                'https://azure.microsoft.com/en-us/blog/feed/',
-                'https://rcpmag.com/rss-feeds/news.aspx',
-                'https://www.dailymail.co.uk/articles.rss'
-            ],
-            refreshInterval: 10 * 60 * 1000, // 10 minutes
+            feeds: [],
+            dailyMailUrl: 'https://www.dailymail.co.uk/articles.rss',
+            refreshInterval: 10 * 60 * 1000, // 10 minutes (will be overridden by feeds.json)
             corsProxy: 'https://api.allorigins.win/raw?url=' // CORS proxy for RSS feeds
         };
+
+        // Load feeds from external JSON file
+        async function loadFeedsConfig() {
+            try {
+                const response = await fetch('feeds.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const config = await response.json();
+                
+                // Update CONFIG with loaded values
+                CONFIG.feeds = config.feeds || [];
+                CONFIG.dailyMailUrl = config.dailyMailUrl || CONFIG.dailyMailUrl;
+                CONFIG.refreshInterval = config.refreshInterval || CONFIG.refreshInterval;
+                CONFIG.corsProxy = config.corsProxy || CONFIG.corsProxy;
+                
+                console.log(`Loaded ${CONFIG.feeds.length} feeds from feeds.json`);
+                return true;
+            } catch (error) {
+                console.error('Error loading feeds.json:', error);
+                console.log('Using default fallback feeds');
+                // Fallback to default feeds if file doesn't exist
+                CONFIG.feeds = [
+                    'https://azure.status.microsoft/en-us/status/feed/',
+                    'https://www.bleepingcomputer.com/feed/',
+                    'https://build5nines.com/feed/',
+                    'https://www.ciraltos.com/feed/',
+                    'https://github.blog/changelog/label/copilot/feed/',
+                    'https://azure.microsoft.com/en-us/blog/feed/',
+                    'https://rcpmag.com/rss-feeds/news.aspx',
+                    'https://www.dailymail.co.uk/articles.rss',
+                    'http://feeds.arstechnica.com/arstechnica/index/',
+                    'https://technology.blog.gov.uk/feed/',
+                    'http://feeds.feedburner.com/TechDigest',
+                    'https://www.computerworld.com/feed/'
+                ];
+                return false;
+            }
+        }
 
         // State
         let isPaused = false;
         let headlines = [];
         let feedHeadlines = []; // Store headlines grouped by feed
         let refreshTimer = null;
+        let tickerFeeds = []; // Will be dynamically populated
 
         // DOM Elements
+        const tickerContainer = document.getElementById('ticker-container');
         const ticker = document.getElementById('ticker');
         const tickerBgTop = document.getElementById('ticker-bg-top');
         const tickerBgBottom = document.getElementById('ticker-bg-bottom');
-        const tickerFeeds = [
-            document.getElementById('ticker-feed-1'),
-            document.getElementById('ticker-feed-2'),
-            document.getElementById('ticker-feed-3'),
-            document.getElementById('ticker-feed-4'),
-            document.getElementById('ticker-feed-5'),
-            document.getElementById('ticker-feed-6'),
-            document.getElementById('ticker-feed-7'),
-            document.getElementById('ticker-feed-8')
-        ];
         const loading = document.getElementById('loading');
         const timestamp = document.getElementById('timestamp');
         const status = document.getElementById('status');
@@ -495,6 +494,67 @@
         const speedSlider = document.getElementById('speedSlider');
         const speedValue = document.getElementById('speedValue');
         const opmlUpload = document.getElementById('opmlUpload');
+
+        // Dynamically create individual feed ticker elements
+        function createFeedTickers(feedCount) {
+            // Remove existing feed tickers
+            document.querySelectorAll('.ticker-feed').forEach(el => el.remove());
+            tickerFeeds = [];
+            
+            // Find Daily Mail index
+            const dailyMailIndex = CONFIG.feeds.findIndex(feed => 
+                feed === CONFIG.dailyMailUrl
+            );
+            
+            // Calculate how many tickers to create (excluding Daily Mail)
+            const tickersToCreate = dailyMailIndex !== -1 ? feedCount - 1 : feedCount;
+            
+            if (tickersToCreate === 0) return;
+            
+            // Calculate position spacing
+            const spacing = 80 / (tickersToCreate + 1); // Distribute across 80% of screen
+            
+            let tickerIndex = 0;
+            for (let i = 0; i < feedCount; i++) {
+                // Skip Daily Mail
+                if (i === dailyMailIndex) continue;
+                
+                // Create ticker container
+                const feedDiv = document.createElement('div');
+                feedDiv.className = 'ticker-feed';
+                feedDiv.dataset.feedIndex = i; // Store original feed index
+                
+                // Alternate between top and bottom, distribute evenly
+                const isTop = tickerIndex % 2 === 0;
+                const position = spacing * (Math.floor(tickerIndex / 2) + 1);
+                
+                if (isTop) {
+                    feedDiv.style.top = `${position}%`;
+                    feedDiv.style.alignItems = 'flex-start';
+                } else {
+                    feedDiv.style.bottom = `${position}%`;
+                    feedDiv.style.alignItems = 'flex-end';
+                }
+                
+                // Create horizontal ticker div
+                const horizontalDiv = document.createElement('div');
+                horizontalDiv.className = 'ticker-horizontal';
+                horizontalDiv.id = `ticker-feed-${i}`;
+                
+                feedDiv.appendChild(horizontalDiv);
+                
+                // Insert before the background ticker (so it's behind everything)
+                const firstBackground = tickerContainer.querySelector('.ticker-background');
+                tickerContainer.insertBefore(feedDiv, firstBackground);
+                
+                // Store reference
+                tickerFeeds[i] = horizontalDiv;
+                
+                tickerIndex++;
+            }
+            
+            console.log(`Created ${tickersToCreate} individual feed tickers for ${feedCount} feeds`);
+        }
 
         // Parse OPML file and extract feed URLs
         function parseOPML(opmlText) {
@@ -554,6 +614,9 @@
                 
                 status.textContent = `Imported ${feedUrls.length} feeds from OPML`;
                 alert(`Successfully imported ${feedUrls.length} RSS feeds!\n\nThe page will now refresh to load your feeds.`);
+                
+                // Recreate feed tickers for new feed count
+                createFeedTickers(feedUrls.length);
                 
                 // Reload feeds
                 await fetchAllFeeds();
@@ -632,6 +695,11 @@
             status.textContent = 'Fetching feeds...';
             loading.style.display = 'block';
             
+            // Ensure we have the right number of ticker elements
+            if (tickerFeeds.length !== CONFIG.feeds.length) {
+                createFeedTickers(CONFIG.feeds.length);
+            }
+            
             const allHeadlines = [];
             feedHeadlines = []; // Reset feed-specific headlines
             
@@ -672,11 +740,23 @@
         function renderTicker() {
             if (headlines.length === 0) return;
             
+            console.log(`Filtering with Daily Mail URL: ${CONFIG.dailyMailUrl}`);
+            
+            // Filter headlines to last 24 hours for main tickers
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recentHeadlines = headlines.filter(h => h.pubDate >= twentyFourHoursAgo);
+            
+            console.log(`Total headlines: ${headlines.length}, Recent (24h): ${recentHeadlines.length}`);
+            
+            // Use recent headlines for main tickers, all headlines for background
+            const headlinesToUse = recentHeadlines.length > 0 ? recentHeadlines : headlines;
+            
             // Separate Daily Mail headlines from others based on feed URL
-            const dailyMailHeadlines = headlines.filter(h => h.feedUrl === 'https://www.dailymail.co.uk/articles.rss');
-            const otherHeadlines = headlines.filter(h => h.feedUrl !== 'https://www.dailymail.co.uk/articles.rss');
+            const dailyMailHeadlines = headlinesToUse.filter(h => h.feedUrl === CONFIG.dailyMailUrl);
+            const otherHeadlines = headlinesToUse.filter(h => h.feedUrl !== CONFIG.dailyMailUrl);
             
             console.log(`Daily Mail headlines: ${dailyMailHeadlines.length}, Other headlines: ${otherHeadlines.length}`);
+            console.log(`First few feed URLs:`, headlines.slice(0, 3).map(h => h.feedUrl));
             
             // Split other headlines between main and top tickers
             const mainHeadlines = otherHeadlines.filter((_, index) => index % 2 === 0);
@@ -700,21 +780,39 @@
                 `).join('');
             };
             
-            // Populate all three ticker layers
+            // Populate all three ticker layers (use recent 24h headlines)
             ticker.innerHTML = renderTickerContent(safeMainHeadlines);
             tickerBgTop.innerHTML = renderTickerContent(safeTopHeadlines);
             tickerBgBottom.innerHTML = renderTickerContent(safeBottomHeadlines);
             
-            // Populate individual feed tickers (up to 8 feeds, excluding Daily Mail at index 7)
+            // Find Daily Mail index
+            const dailyMailIndex = CONFIG.feeds.findIndex(feed => 
+                feed === CONFIG.dailyMailUrl
+            );
+            
+            // Populate individual feed tickers (excluding Daily Mail) - use ALL headlines, not just 24h
             feedHeadlines.forEach((feedHeads, index) => {
-                if (index < 8 && index !== 7 && tickerFeeds[index]) {
-                    const content = feedHeads.length > 0 ? feedHeads : headlines.slice(0, 5);
-                    tickerFeeds[index].innerHTML = renderTickerContent(content);
-                } else if (index === 7 && tickerFeeds[index]) {
-                    // Clear Daily Mail feed ticker
-                    tickerFeeds[index].innerHTML = '';
+                // Skip Daily Mail
+                if (index === dailyMailIndex) return;
+                
+                console.log(`Feed ${index}: ${CONFIG.feeds[index]?.substring(0, 50)}... has ${feedHeads.length} headlines`);
+                
+                if (tickerFeeds[index]) {
+                    // Use this feed's headlines if available
+                    if (feedHeads.length > 0) {
+                        tickerFeeds[index].innerHTML = renderTickerContent(feedHeads);
+                        console.log(`  -> Populated ticker-feed-${index}`);
+                    } else {
+                        // Clear if no content
+                        tickerFeeds[index].innerHTML = '';
+                        console.log(`  -> Cleared ticker-feed-${index} (no content)`);
+                    }
+                } else {
+                    console.log(`  -> WARNING: tickerFeeds[${index}] does not exist!`);
                 }
             });
+            
+            console.log(`Populated ${feedHeadlines.filter((f, i) => i !== dailyMailIndex && f.length > 0).length} individual feed tickers`);
         }
 
         // Theme toggle
@@ -731,7 +829,9 @@
             tickerBgTop.style.animationPlayState = playState;
             tickerBgBottom.style.animationPlayState = playState;
             tickerFeeds.forEach(feed => {
-                feed.style.animationPlayState = playState;
+                if (feed) {
+                    feed.style.animationPlayState = playState;
+                }
             });
             pausePlayBtn.textContent = isPaused ? '▶️ Play' : '⏸️ Pause';
         });
@@ -761,16 +861,20 @@
 
         // Initialize
         async function init() {
-            // Restore saved feeds from localStorage
+            // Load feeds configuration from external file FIRST
+            await loadFeedsConfig();
+            
+            // Check if localStorage has old feeds - if so, clear it to use feeds.json
             const savedFeeds = localStorage.getItem('rssFeeds');
             if (savedFeeds) {
-                try {
-                    CONFIG.feeds = JSON.parse(savedFeeds);
-                    console.log(`Loaded ${CONFIG.feeds.length} feeds from localStorage`);
-                } catch (error) {
-                    console.error('Error loading saved feeds:', error);
-                }
+                console.warn('Found old feeds in localStorage - removing to use feeds.json');
+                localStorage.removeItem('rssFeeds');
             }
+            
+            console.log(`CONFIG.dailyMailUrl set to: ${CONFIG.dailyMailUrl}`);
+            
+            // Create individual feed tickers based on current feed count
+            createFeedTickers(CONFIG.feeds.length);
 
             // Restore theme preference
             const savedTheme = localStorage.getItem('theme');
