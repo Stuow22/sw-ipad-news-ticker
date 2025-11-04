@@ -645,10 +645,17 @@
             });
         }
 
-        // Fetch RSS feed
+        // Fetch RSS feed with timeout
         async function fetchRSSFeed(feedUrl) {
             try {
-                const response = await fetch(CONFIG.corsProxy + encodeURIComponent(feedUrl));
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                
+                const response = await fetch(CONFIG.corsProxy + encodeURIComponent(feedUrl), {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                
                 const text = await response.text();
                 const parser = new DOMParser();
                 const xml = parser.parseFromString(text, 'text/xml');
@@ -683,9 +690,10 @@
                     }
                 });
 
+                console.log(`✓ Loaded ${headlines.length} items from ${feedTitle}`);
                 return headlines;
             } catch (error) {
-                console.error(`Error fetching feed ${feedUrl}:`, error);
+                console.error(`✗ Error fetching feed ${feedUrl}:`, error.name === 'AbortError' ? 'Timeout' : error.message);
                 return [];
             }
         }
@@ -695,6 +703,8 @@
             status.textContent = 'Fetching feeds...';
             loading.style.display = 'block';
             
+            console.log(`Starting to fetch ${CONFIG.feeds.length} feeds...`);
+            
             // Ensure we have the right number of ticker elements
             if (tickerFeeds.length !== CONFIG.feeds.length) {
                 createFeedTickers(CONFIG.feeds.length);
@@ -703,22 +713,27 @@
             const allHeadlines = [];
             feedHeadlines = []; // Reset feed-specific headlines
             
-            // Fetch all feeds in parallel
+            // Fetch all feeds in parallel with timeout
             const results = await Promise.allSettled(
                 CONFIG.feeds.map(feed => fetchRSSFeed(feed))
             );
             
+            let successCount = 0;
             results.forEach((result, index) => {
                 if (result.status === 'fulfilled' && result.value.length > 0) {
                     allHeadlines.push(...result.value);
                     feedHeadlines[index] = result.value; // Store by feed index
+                    successCount++;
                 } else {
                     feedHeadlines[index] = []; // Empty array for failed feeds
                 }
             });
 
+            console.log(`Fetched ${successCount}/${CONFIG.feeds.length} feeds successfully`);
+
             if (allHeadlines.length === 0) {
                 // Fallback headlines if no feeds load
+                console.warn('No headlines loaded, using fallback');
                 allHeadlines.push(
                     { title: 'Welcome to your iPad News Ticker!', source: 'System', link: '#', pubDate: new Date() },
                     { title: 'Configure your RSS feeds by editing the CONFIG.feeds array', source: 'System', link: '#', pubDate: new Date() },
@@ -732,7 +747,7 @@
             headlines = allHeadlines;
             renderTicker();
             loading.style.display = 'none';
-            status.textContent = `Loaded ${headlines.length} headlines from ${CONFIG.feeds.length} feeds`;
+            status.textContent = `Loaded ${headlines.length} headlines from ${successCount}/${CONFIG.feeds.length} feeds`;
             updateTimestamp();
         }
 
