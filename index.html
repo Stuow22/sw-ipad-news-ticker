@@ -762,15 +762,21 @@
             const mainHeadlines = otherHeadlines.filter((_, index) => index % 2 === 0);
             const topHeadlines = otherHeadlines.filter((_, index) => index % 2 === 1);
             
-            // Use Daily Mail for bottom, ensure we have content for all layers
-            const safeMainHeadlines = mainHeadlines.length > 0 ? mainHeadlines : otherHeadlines.length > 0 ? otherHeadlines : headlines;
-            const safeTopHeadlines = topHeadlines.length > 0 ? topHeadlines : otherHeadlines.length > 0 ? otherHeadlines : headlines;
-            const safeBottomHeadlines = dailyMailHeadlines.length > 0 ? dailyMailHeadlines : headlines;
+            // Limit headlines to control scroll speed - cap at reasonable numbers
+            const maxMainItems = 10;
+            const maxTopItems = 10;
+            const maxBottomItems = 20;
+            const maxIndividualItems = 15;
             
-            // Duplicate headlines for seamless loop
+            // Use Daily Mail for bottom, ensure we have content for all layers
+            const safeMainHeadlines = (mainHeadlines.length > 0 ? mainHeadlines : otherHeadlines.length > 0 ? otherHeadlines : headlines).slice(0, maxMainItems);
+            const safeTopHeadlines = (topHeadlines.length > 0 ? topHeadlines : otherHeadlines.length > 0 ? otherHeadlines : headlines).slice(0, maxTopItems);
+            const safeBottomHeadlines = (dailyMailHeadlines.length > 0 ? dailyMailHeadlines : headlines).slice(0, maxBottomItems);
+            
+            // Duplicate headlines for seamless loop (3x for smooth scrolling)
             const renderTickerContent = (headlineArray) => {
-                const duplicated = [...headlineArray, ...headlineArray];
-                return duplicated.map(item => `
+                const tripled = [...headlineArray, ...headlineArray, ...headlineArray];
+                return tripled.map(item => `
                     <div class="ticker-item">
                         <span class="source">${item.source}</span>
                         <a href="${item.link}" target="_blank" rel="noopener noreferrer">
@@ -798,10 +804,11 @@
                 console.log(`Feed ${index}: ${CONFIG.feeds[index]?.substring(0, 50)}... has ${feedHeads.length} headlines`);
                 
                 if (tickerFeeds[index]) {
-                    // Use this feed's headlines if available
+                    // Use this feed's headlines if available, but cap at maxIndividualItems
                     if (feedHeads.length > 0) {
-                        tickerFeeds[index].innerHTML = renderTickerContent(feedHeads);
-                        console.log(`  -> Populated ticker-feed-${index}`);
+                        const limitedHeads = feedHeads.slice(0, maxIndividualItems);
+                        tickerFeeds[index].innerHTML = renderTickerContent(limitedHeads);
+                        console.log(`  -> Populated ticker-feed-${index} with ${limitedHeads.length} items`);
                     } else {
                         // Clear if no content
                         tickerFeeds[index].innerHTML = '';
