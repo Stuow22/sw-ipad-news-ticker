@@ -120,6 +120,8 @@
             opacity: 0.15;
             z-index: 1;
             pointer-events: none;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0); /* GPU acceleration */
         }
         
         .ticker-feed .ticker-item a {
@@ -146,6 +148,9 @@
             align-items: center;
             white-space: nowrap;
             will-change: transform;
+            transform: translateZ(0); /* Force GPU acceleration */
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden; /* Optimize for iPad */
         }
 
         /* Main ticker - fixed speed */
@@ -176,10 +181,10 @@
 
         @keyframes scroll-horizontal {
             0% {
-                transform: translateX(0);
+                transform: translate3d(0, 0, 0); /* Use translate3d for GPU */
             }
             100% {
-                transform: translateX(-50%);
+                transform: translate3d(-50%, 0, 0); /* Use translate3d for GPU */
             }
         }
 
@@ -507,7 +512,14 @@
             );
             
             // Calculate how many tickers to create (excluding Daily Mail)
-            const tickersToCreate = dailyMailIndex !== -1 ? feedCount - 1 : feedCount;
+            let tickersToCreate = dailyMailIndex !== -1 ? feedCount - 1 : feedCount;
+            
+            // Limit individual tickers on iPad for performance (max 6 individual feeds)
+            const isIPad = /iPad|Macintosh/i.test(navigator.userAgent) && 'ontouchend' in document;
+            if (isIPad && tickersToCreate > 6) {
+                console.log('iPad detected - limiting to 6 individual feed tickers for performance');
+                tickersToCreate = 6;
+            }
             
             if (tickersToCreate === 0) return;
             
