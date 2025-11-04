@@ -15,5 +15,5 @@
   ],
   "dailyMailUrl": "https://www.dailymail.co.uk/articles.rss",
   "refreshInterval": 600000,
-  "corsProxy": "https://api.allorigins.win/raw?url="
+  "corsProxy": "https://corsproxy.io/?"
 }

@@ -436,7 +436,7 @@
             feeds: [],
             dailyMailUrl: 'https://www.dailymail.co.uk/articles.rss',
             refreshInterval: 10 * 60 * 1000, // 10 minutes (will be overridden by feeds.json)
-            corsProxy: 'https://api.allorigins.win/raw?url=' // CORS proxy for RSS feeds
+            corsProxy: 'https://corsproxy.io/?' // CORS proxy for RSS feeds
         };
 
         // Load feeds from external JSON file
@@ -661,7 +661,7 @@
         async function fetchRSSFeed(feedUrl) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
                 
                 const response = await fetch(CONFIG.corsProxy + encodeURIComponent(feedUrl), {
                     signal: controller.signal
