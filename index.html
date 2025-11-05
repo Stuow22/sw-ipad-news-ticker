@@ -22,7 +22,7 @@
             --separator-color: #333333;
             --main-speed: 250s; /* Main center ticker speed */
             --top-speed: 300s; /* Top ticker speed */
-            --bottom-speed: 600s; /* Bottom ticker speed */
+            --bottom-speed: 1200s; /* Bottom ticker speed (slowest) */
         }
 
         body {
@@ -425,16 +425,16 @@
         
         <div class="speed-control">
             <label for="mainSpeedSlider">Main:</label>
-            <input type="range" id="mainSpeedSlider" min="50" max="600" value="250" step="10">
+            <input type="range" id="mainSpeedSlider" min="50" max="1200" value="250" step="10">
             <span id="mainSpeedValue">250s</span>
 
             <label for="topSpeedSlider" style="margin-left: 20px;">Top:</label>
-            <input type="range" id="topSpeedSlider" min="50" max="600" value="300" step="10">
+            <input type="range" id="topSpeedSlider" min="50" max="1200" value="300" step="10">
             <span id="topSpeedValue">300s</span>
 
             <label for="bottomSpeedSlider" style="margin-left: 20px;">Bottom:</label>
-            <input type="range" id="bottomSpeedSlider" min="50" max="600" value="600" step="10">
-            <span id="bottomSpeedValue">600s</span>
+            <input type="range" id="bottomSpeedSlider" min="50" max="1800" value="1200" step="10">
+            <span id="bottomSpeedValue">1200s</span>
         </div>
         
         <div class="status" id="status">Initializing...</div>
