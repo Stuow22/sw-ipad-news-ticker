@@ -889,12 +889,25 @@
             fetchAllFeeds();
         });
 
+        // Helper function to restart animation
+        function restartAnimation(element) {
+            // Remove animation
+            const currentAnimation = element.style.animation;
+            element.style.animation = 'none';
+            // Force reflow
+            element.offsetHeight;
+            // Restore animation
+            element.style.animation = currentAnimation || '';
+        }
+
         // Speed controls
         mainSpeedSlider.addEventListener('input', (e) => {
             const speed = e.target.value;
             mainSpeedValue.textContent = `${speed}s`;
             document.documentElement.style.setProperty('--main-speed', `${speed}s`);
             localStorage.setItem('mainScrollSpeed', speed);
+            // Restart animation to apply new speed
+            restartAnimation(ticker);
         });
 
         topSpeedSlider.addEventListener('input', (e) => {
@@ -902,6 +915,8 @@
             topSpeedValue.textContent = `${speed}s`;
             document.documentElement.style.setProperty('--top-speed', `${speed}s`);
             localStorage.setItem('topScrollSpeed', speed);
+            // Restart animation to apply new speed
+            restartAnimation(tickerBgTop);
         });
 
         bottomSpeedSlider.addEventListener('input', (e) => {
@@ -909,6 +924,8 @@
             bottomSpeedValue.textContent = `${speed}s`;
             document.documentElement.style.setProperty('--bottom-speed', `${speed}s`);
             localStorage.setItem('bottomScrollSpeed', speed);
+            // Restart animation to apply new speed
+            restartAnimation(tickerBgBottom);
         });
 
         // Auto-refresh feeds
