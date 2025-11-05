@@ -218,17 +218,22 @@
 
         /* Highlight new/breaking articles in red */
         .ticker-item.new-article {
-            color: #ff0000;
+            color: #e60000;
             font-weight: 700;
+            text-shadow: 0 0 10px rgba(230, 0, 0, 0.5);
         }
 
         .ticker-item.new-article a {
-            color: #ff0000;
+            color: #e60000;
         }
 
         body.light-mode .ticker-item.new-article,
         body.light-mode .ticker-item.new-article a {
-            color: #cc0000;
+            color: #b30000;
+        }
+
+        body.light-mode .ticker-item.new-article {
+            text-shadow: 0 0 8px rgba(179, 0, 0, 0.3);
         }
 
         .ticker-item::after {
@@ -813,20 +818,25 @@
             
             console.log(`Filtering with Daily Mail URL: ${CONFIG.dailyMailUrl}`);
 
-            // Filter headlines to last 10 days for main tickers (prioritizes newest first)
-            const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
-            const recentHeadlines = headlines.filter(h => h.pubDate >= tenDaysAgo);
+            // Separate Daily Mail from other feeds FIRST
+            const allDailyMailHeadlines = headlines.filter(h => h.feedUrl === CONFIG.dailyMailUrl);
+            const allOtherHeadlines = headlines.filter(h => h.feedUrl !== CONFIG.dailyMailUrl);
 
-            console.log(`Total headlines: ${headlines.length}, Recent (10 days): ${recentHeadlines.length}`);
-            
-            // Use recent headlines for main tickers, all headlines for background
-            const headlinesToUse = recentHeadlines.length > 0 ? recentHeadlines : headlines;
-            
-            // Separate Daily Mail headlines from others based on feed URL
-            const dailyMailHeadlines = headlinesToUse.filter(h => h.feedUrl === CONFIG.dailyMailUrl);
-            const otherHeadlines = headlinesToUse.filter(h => h.feedUrl !== CONFIG.dailyMailUrl);
-            
-            console.log(`Daily Mail headlines: ${dailyMailHeadlines.length}, Other headlines: ${otherHeadlines.length}`);
+            // Filter Daily Mail to last 24 hours only (high volume source)
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recentDailyMail = allDailyMailHeadlines.filter(h => h.pubDate >= twentyFourHoursAgo);
+
+            // Filter other feeds to last 14 days (more variety needed)
+            const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+            const recentOthers = allOtherHeadlines.filter(h => h.pubDate >= fourteenDaysAgo);
+
+            console.log(`Total headlines: ${headlines.length}`);
+            console.log(`Daily Mail: ${allDailyMailHeadlines.length} total, ${recentDailyMail.length} in last 24h`);
+            console.log(`Other feeds: ${allOtherHeadlines.length} total, ${recentOthers.length} in last 14 days`);
+
+            // Use filtered headlines
+            const dailyMailHeadlines = recentDailyMail.length > 0 ? recentDailyMail : allDailyMailHeadlines;
+            const otherHeadlines = recentOthers.length > 0 ? recentOthers : allOtherHeadlines;
             console.log(`First few feed URLs:`, headlines.slice(0, 3).map(h => h.feedUrl));
 
             // Don't split - use ALL non-Daily Mail articles for both main and top
