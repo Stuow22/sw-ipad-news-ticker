@@ -20,7 +20,9 @@
             --text-color: #ffffff;
             --accent-color: #00ffff;
             --separator-color: #333333;
-            --scroll-speed: 600s; /* Adjustable scroll speed */
+            --main-speed: 250s; /* Main center ticker speed */
+            --top-speed: 300s; /* Top ticker speed */
+            --bottom-speed: 600s; /* Bottom ticker speed */
         }
 
         body {
@@ -153,19 +155,19 @@
             backface-visibility: hidden; /* Optimize for iPad */
         }
 
-        /* Main ticker - fixed speed */
+        /* Main ticker - uses CSS variable */
         .ticker-main .ticker-horizontal {
-            animation: scroll-horizontal 50s linear infinite;
+            animation: scroll-horizontal var(--main-speed) linear infinite;
         }
 
-        /* Top ticker - fixed speed */
+        /* Top ticker - uses CSS variable */
         .ticker-background-top .ticker-horizontal {
-            animation: scroll-horizontal 60s linear infinite;
+            animation: scroll-horizontal var(--top-speed) linear infinite;
         }
 
-        /* Adjust bottom ticker speed - Daily Mail has more content */
+        /* Bottom ticker - uses CSS variable */
         .ticker-background-bottom .ticker-horizontal {
-            animation: scroll-horizontal 1500s linear infinite;
+            animation: scroll-horizontal var(--bottom-speed) linear infinite;
         }
 
         /* Individual feed tickers - very slow */
@@ -422,9 +424,17 @@
         </div>
         
         <div class="speed-control">
-            <label for="speedSlider">Speed:</label>
-            <input type="range" id="speedSlider" min="60" max="1800" value="600" step="60">
-            <span id="speedValue">600s</span>
+            <label for="mainSpeedSlider">Main:</label>
+            <input type="range" id="mainSpeedSlider" min="50" max="600" value="250" step="10">
+            <span id="mainSpeedValue">250s</span>
+
+            <label for="topSpeedSlider" style="margin-left: 20px;">Top:</label>
+            <input type="range" id="topSpeedSlider" min="50" max="600" value="300" step="10">
+            <span id="topSpeedValue">300s</span>
+
+            <label for="bottomSpeedSlider" style="margin-left: 20px;">Bottom:</label>
+            <input type="range" id="bottomSpeedSlider" min="50" max="600" value="600" step="10">
+            <span id="bottomSpeedValue">600s</span>
         </div>
         
         <div class="status" id="status">Initializing...</div>
@@ -496,8 +506,12 @@
         const themeToggle = document.getElementById('themeToggle');
         const pausePlayBtn = document.getElementById('pausePlay');
         const refreshBtn = document.getElementById('refreshBtn');
-        const speedSlider = document.getElementById('speedSlider');
-        const speedValue = document.getElementById('speedValue');
+        const mainSpeedSlider = document.getElementById('mainSpeedSlider');
+        const mainSpeedValue = document.getElementById('mainSpeedValue');
+        const topSpeedSlider = document.getElementById('topSpeedSlider');
+        const topSpeedValue = document.getElementById('topSpeedValue');
+        const bottomSpeedSlider = document.getElementById('bottomSpeedSlider');
+        const bottomSpeedValue = document.getElementById('bottomSpeedValue');
         const opmlUpload = document.getElementById('opmlUpload');
 
         // Dynamically create individual feed ticker elements
@@ -875,12 +889,26 @@
             fetchAllFeeds();
         });
 
-        // Speed control
-        speedSlider.addEventListener('input', (e) => {
+        // Speed controls
+        mainSpeedSlider.addEventListener('input', (e) => {
             const speed = e.target.value;
-            speedValue.textContent = `${speed}s`;
-            document.documentElement.style.setProperty('--scroll-speed', `${speed}s`);
-            localStorage.setItem('scrollSpeed', speed);
+            mainSpeedValue.textContent = `${speed}s`;
+            document.documentElement.style.setProperty('--main-speed', `${speed}s`);
+            localStorage.setItem('mainScrollSpeed', speed);
+        });
+
+        topSpeedSlider.addEventListener('input', (e) => {
+            const speed = e.target.value;
+            topSpeedValue.textContent = `${speed}s`;
+            document.documentElement.style.setProperty('--top-speed', `${speed}s`);
+            localStorage.setItem('topScrollSpeed', speed);
+        });
+
+        bottomSpeedSlider.addEventListener('input', (e) => {
+            const speed = e.target.value;
+            bottomSpeedValue.textContent = `${speed}s`;
+            document.documentElement.style.setProperty('--bottom-speed', `${speed}s`);
+            localStorage.setItem('bottomScrollSpeed', speed);
         });
 
         // Auto-refresh feeds
@@ -916,12 +944,26 @@
                 document.body.classList.add('light-mode');
             }
 
-            // Restore scroll speed
-            const savedSpeed = localStorage.getItem('scrollSpeed');
-            if (savedSpeed) {
-                speedSlider.value = savedSpeed;
-                speedValue.textContent = `${savedSpeed}s`;
-                document.documentElement.style.setProperty('--scroll-speed', `${savedSpeed}s`);
+            // Restore scroll speeds
+            const savedMainSpeed = localStorage.getItem('mainScrollSpeed');
+            if (savedMainSpeed) {
+                mainSpeedSlider.value = savedMainSpeed;
+                mainSpeedValue.textContent = `${savedMainSpeed}s`;
+                document.documentElement.style.setProperty('--main-speed', `${savedMainSpeed}s`);
+            }
+
+            const savedTopSpeed = localStorage.getItem('topScrollSpeed');
+            if (savedTopSpeed) {
+                topSpeedSlider.value = savedTopSpeed;
+                topSpeedValue.textContent = `${savedTopSpeed}s`;
+                document.documentElement.style.setProperty('--top-speed', `${savedTopSpeed}s`);
+            }
+
+            const savedBottomSpeed = localStorage.getItem('bottomScrollSpeed');
+            if (savedBottomSpeed) {
+                bottomSpeedSlider.value = savedBottomSpeed;
+                bottomSpeedValue.textContent = `${savedBottomSpeed}s`;
+                document.documentElement.style.setProperty('--bottom-speed', `${savedBottomSpeed}s`);
             }
 
             // Update timestamp every minute
