@@ -371,15 +371,35 @@
             .header h1 {
                 font-size: 1.5em;
             }
-            
+
             .ticker-item {
                 font-size: 1.2em;
             }
-            
+
             .footer {
                 flex-direction: column;
                 gap: 10px;
             }
+        }
+
+        /* Fullscreen mode - hide header and footer */
+        body:fullscreen .header,
+        body:fullscreen .footer,
+        body:-webkit-full-screen .header,
+        body:-webkit-full-screen .footer,
+        body:-moz-full-screen .header,
+        body:-moz-full-screen .footer,
+        body:-ms-fullscreen .header,
+        body:-ms-fullscreen .footer {
+            display: none;
+        }
+
+        /* Expand ticker container to fill fullscreen */
+        body:fullscreen .ticker-container,
+        body:-webkit-full-screen .ticker-container,
+        body:-moz-full-screen .ticker-container,
+        body:-ms-fullscreen .ticker-container {
+            height: 100vh;
         }
     </style>
 </head>
