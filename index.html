@@ -783,11 +783,11 @@
             
             console.log(`Filtering with Daily Mail URL: ${CONFIG.dailyMailUrl}`);
             
-            // Filter headlines to last 24 hours for main tickers
-            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            const recentHeadlines = headlines.filter(h => h.pubDate >= twentyFourHoursAgo);
-            
-            console.log(`Total headlines: ${headlines.length}, Recent (24h): ${recentHeadlines.length}`);
+            // Filter headlines to last 5 days for main tickers (prioritizes newest first)
+            const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+            const recentHeadlines = headlines.filter(h => h.pubDate >= fiveDaysAgo);
+
+            console.log(`Total headlines: ${headlines.length}, Recent (5 days): ${recentHeadlines.length}`);
             
             // Use recent headlines for main tickers, all headlines for background
             const headlinesToUse = recentHeadlines.length > 0 ? recentHeadlines : headlines;
@@ -804,10 +804,10 @@
             const topHeadlines = otherHeadlines.filter((_, index) => index % 2 === 1);
             
             // Limit headlines to control scroll speed - cap at reasonable numbers
-            const maxMainItems = 10;
-            const maxTopItems = 10;
-            const maxBottomItems = 20;
-            const maxIndividualItems = 15;
+            const maxMainItems = 50;
+            const maxTopItems = 50;
+            const maxBottomItems = 75;
+            const maxIndividualItems = 30;
             
             // Use Daily Mail for bottom, ensure we have content for all layers
             const safeMainHeadlines = (mainHeadlines.length > 0 ? mainHeadlines : otherHeadlines.length > 0 ? otherHeadlines : headlines).slice(0, maxMainItems);
@@ -819,7 +819,6 @@
                 const tripled = [...headlineArray, ...headlineArray, ...headlineArray];
                 return tripled.map(item => `
                     <div class="ticker-item">
-                        <span class="source">${item.source}</span>
                         <a href="${item.link}" target="_blank" rel="noopener noreferrer">
                             ${item.title}
                         </a>
@@ -889,12 +888,25 @@
             fetchAllFeeds();
         });
 
+        // Helper function to restart animation
+        function restartAnimation(element) {
+            // Remove animation
+            const currentAnimation = element.style.animation;
+            element.style.animation = 'none';
+            // Force reflow
+            element.offsetHeight;
+            // Restore animation
+            element.style.animation = currentAnimation || '';
+        }
+
         // Speed controls
         mainSpeedSlider.addEventListener('input', (e) => {
             const speed = e.target.value;
             mainSpeedValue.textContent = `${speed}s`;
             document.documentElement.style.setProperty('--main-speed', `${speed}s`);
             localStorage.setItem('mainScrollSpeed', speed);
+            // Restart animation to apply new speed
+            restartAnimation(ticker);
         });
 
         topSpeedSlider.addEventListener('input', (e) => {
@@ -902,6 +914,8 @@
             topSpeedValue.textContent = `${speed}s`;
             document.documentElement.style.setProperty('--top-speed', `${speed}s`);
             localStorage.setItem('topScrollSpeed', speed);
+            // Restart animation to apply new speed
+            restartAnimation(tickerBgTop);
         });
 
         bottomSpeedSlider.addEventListener('input', (e) => {
@@ -909,6 +923,8 @@
             bottomSpeedValue.textContent = `${speed}s`;
             document.documentElement.style.setProperty('--bottom-speed', `${speed}s`);
             localStorage.setItem('bottomScrollSpeed', speed);
+            // Restart animation to apply new speed
+            restartAnimation(tickerBgBottom);
         });
 
         // Auto-refresh feeds
