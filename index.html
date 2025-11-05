@@ -218,17 +218,22 @@
 
         /* Highlight new/breaking articles in red */
         .ticker-item.new-article {
-            color: #ff0000;
+            color: #e60000;
             font-weight: 700;
+            text-shadow: 0 0 10px rgba(230, 0, 0, 0.5);
         }
 
         .ticker-item.new-article a {
-            color: #ff0000;
+            color: #e60000;
         }
 
         body.light-mode .ticker-item.new-article,
         body.light-mode .ticker-item.new-article a {
-            color: #cc0000;
+            color: #b30000;
+        }
+
+        body.light-mode .ticker-item.new-article {
+            text-shadow: 0 0 8px rgba(179, 0, 0, 0.3);
         }
 
         .ticker-item::after {
