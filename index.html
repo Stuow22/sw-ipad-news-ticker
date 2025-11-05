@@ -686,19 +686,18 @@
 
         // Fetch RSS feed with timeout
         async function fetchRSSFeed(feedUrl) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-                
                 const response = await fetch(CONFIG.corsProxy + encodeURIComponent(feedUrl), {
                     signal: controller.signal
                 });
-                clearTimeout(timeoutId);
-                
+
                 const text = await response.text();
                 const parser = new DOMParser();
                 const xml = parser.parseFromString(text, 'text/xml');
-                
+
                 // Check for parsing errors
                 const parserError = xml.querySelector('parsererror');
                 if (parserError) {
@@ -708,16 +707,16 @@
                 // Extract headlines (supports both RSS and Atom formats)
                 const items = xml.querySelectorAll('item, entry');
                 const feedTitle = xml.querySelector('channel > title, feed > title')?.textContent || 'News';
-                
+
                 const headlines = [];
                 items.forEach(item => {
                     const title = item.querySelector('title')?.textContent;
-                    const link = item.querySelector('link')?.textContent || 
+                    const link = item.querySelector('link')?.textContent ||
                                 item.querySelector('link')?.getAttribute('href');
                     // Get publication date (RSS uses pubDate, Atom uses published or updated)
                     const pubDateText = item.querySelector('pubDate, published, updated')?.textContent;
                     const pubDate = pubDateText ? new Date(pubDateText) : new Date(0);
-                    
+
                     if (title) {
                         headlines.push({
                             title: title.trim(),
@@ -734,6 +733,9 @@
             } catch (error) {
                 console.error(`✗ Error fetching feed ${feedUrl}:`, error.name === 'AbortError' ? 'Timeout' : error.message);
                 return [];
+            } finally {
+                // Always clear timeout to prevent memory leak
+                clearTimeout(timeoutId);
             }
         }
 
