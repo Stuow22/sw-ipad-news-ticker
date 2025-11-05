@@ -813,11 +813,14 @@
             
             console.log(`Daily Mail headlines: ${dailyMailHeadlines.length}, Other headlines: ${otherHeadlines.length}`);
             console.log(`First few feed URLs:`, headlines.slice(0, 3).map(h => h.feedUrl));
-            
-            // Split other headlines between main and top tickers
-            const mainHeadlines = otherHeadlines.filter((_, index) => index % 2 === 0);
-            const topHeadlines = otherHeadlines.filter((_, index) => index % 2 === 1);
-            
+
+            // Don't split - use ALL non-Daily Mail articles for both main and top
+            // Users want to see all available content, not just half
+            const mainHeadlines = otherHeadlines;
+            const topHeadlines = otherHeadlines;
+
+            console.log(`Main feed will show: ${mainHeadlines.length} unique articles`);
+
             // Show all available headlines - users want to see everything from 12 feeds
             const maxMainItems = 500;
             const maxTopItems = 500;
