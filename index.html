@@ -216,6 +216,21 @@
             transition: color 0.3s ease;
         }
 
+        /* Highlight new/breaking articles in red */
+        .ticker-item.new-article {
+            color: #ff0000;
+            font-weight: 700;
+        }
+
+        .ticker-item.new-article a {
+            color: #ff0000;
+        }
+
+        body.light-mode .ticker-item.new-article,
+        body.light-mode .ticker-item.new-article a {
+            color: #cc0000;
+        }
+
         .ticker-item::after {
             content: "•";
             margin-left: 40px;
@@ -797,12 +812,12 @@
             if (headlines.length === 0) return;
             
             console.log(`Filtering with Daily Mail URL: ${CONFIG.dailyMailUrl}`);
-            
-            // Filter headlines to last 5 days for main tickers (prioritizes newest first)
-            const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-            const recentHeadlines = headlines.filter(h => h.pubDate >= fiveDaysAgo);
 
-            console.log(`Total headlines: ${headlines.length}, Recent (5 days): ${recentHeadlines.length}`);
+            // Filter headlines to last 10 days for main tickers (prioritizes newest first)
+            const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+            const recentHeadlines = headlines.filter(h => h.pubDate >= tenDaysAgo);
+
+            console.log(`Total headlines: ${headlines.length}, Recent (10 days): ${recentHeadlines.length}`);
             
             // Use recent headlines for main tickers, all headlines for background
             const headlinesToUse = recentHeadlines.length > 0 ? recentHeadlines : headlines;
@@ -835,13 +850,21 @@
             // Duplicate headlines for seamless loop (3x for smooth scrolling)
             const renderTickerContent = (headlineArray) => {
                 const tripled = [...headlineArray, ...headlineArray, ...headlineArray];
-                return tripled.map(item => `
-                    <div class="ticker-item">
-                        <a href="${item.link}" target="_blank" rel="noopener noreferrer">
-                            ${item.title}
-                        </a>
-                    </div>
-                `).join('');
+                const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+
+                return tripled.map(item => {
+                    // Mark articles from last 6 hours as new/breaking
+                    const isNew = item.pubDate >= sixHoursAgo;
+                    const newClass = isNew ? ' new-article' : '';
+
+                    return `
+                        <div class="ticker-item${newClass}">
+                            <a href="${item.link}" target="_blank" rel="noopener noreferrer">
+                                ${item.title}
+                            </a>
+                        </div>
+                    `;
+                }).join('');
             };
             
             // Populate all three ticker layers (use recent 24h headlines)
