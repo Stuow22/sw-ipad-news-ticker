@@ -175,6 +175,18 @@
             animation: scroll-horizontal 900s linear infinite;
         }
 
+        /* Pause animation on hover for all tickers */
+        .ticker-horizontal:hover {
+            animation-play-state: paused !important;
+        }
+
+        /* Visual indication when paused */
+        .ticker-item:hover {
+            cursor: pointer;
+            transform: scale(1.05);
+            transition: transform 0.2s ease;
+        }
+
         /* Make feed ticker items smaller */
         .ticker-feed .ticker-item {
             font-size: 1.2em;
