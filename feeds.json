@@ -8,9 +8,9 @@
     "https://azure.microsoft.com/en-us/blog/feed/",
     "https://rcpmag.com/rss-feeds/news.aspx",
     "https://www.dailymail.co.uk/articles.rss",
-    "http://feeds.arstechnica.com/arstechnica/index/",
+    "https://feeds.arstechnica.com/arstechnica/index/",
     "https://technology.blog.gov.uk/feed/",
-    "http://feeds.feedburner.com/TechDigest",
+    "https://feeds.feedburner.com/TechDigest",
     "https://www.computerworld.com/feed/"
   ],
   "dailyMailUrl": "https://www.dailymail.co.uk/articles.rss",
