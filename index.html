@@ -383,22 +383,22 @@
         }
 
         /* Fullscreen mode - hide header and footer */
-        body:fullscreen .header,
-        body:fullscreen .footer,
-        body:-webkit-full-screen .header,
-        body:-webkit-full-screen .footer,
-        body:-moz-full-screen .header,
-        body:-moz-full-screen .footer,
-        body:-ms-fullscreen .header,
-        body:-ms-fullscreen .footer {
+        :root:fullscreen .header,
+        :root:fullscreen .footer,
+        :root:-webkit-full-screen .header,
+        :root:-webkit-full-screen .footer,
+        :root:-moz-full-screen .header,
+        :root:-moz-full-screen .footer,
+        :root:-ms-fullscreen .header,
+        :root:-ms-fullscreen .footer {
             display: none;
         }
 
         /* Expand ticker container to fill fullscreen */
-        body:fullscreen .ticker-container,
-        body:-webkit-full-screen .ticker-container,
-        body:-moz-full-screen .ticker-container,
-        body:-ms-fullscreen .ticker-container {
+        :root:fullscreen .ticker-container,
+        :root:-webkit-full-screen .ticker-container,
+        :root:-moz-full-screen .ticker-container,
+        :root:-ms-fullscreen .ticker-container {
             height: 100vh;
         }
     </style>
