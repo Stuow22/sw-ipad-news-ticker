@@ -383,23 +383,14 @@
         }
 
         /* Fullscreen mode - hide header and footer */
-        :root:fullscreen .header,
-        :root:fullscreen .footer,
-        :root:-webkit-full-screen .header,
-        :root:-webkit-full-screen .footer,
-        :root:-moz-full-screen .header,
-        :root:-moz-full-screen .footer,
-        :root:-ms-fullscreen .header,
-        :root:-ms-fullscreen .footer {
-            display: none;
+        body.fullscreen-mode .header,
+        body.fullscreen-mode .footer {
+            display: none !important;
         }
 
         /* Expand ticker container to fill fullscreen */
-        :root:fullscreen .ticker-container,
-        :root:-webkit-full-screen .ticker-container,
-        :root:-moz-full-screen .ticker-container,
-        :root:-ms-fullscreen .ticker-container {
-            height: 100vh;
+        body.fullscreen-mode .ticker-container {
+            height: 100vh !important;
         }
     </style>
 </head>
@@ -437,6 +428,7 @@
             <button id="themeToggle">🌓 Toggle Theme</button>
             <button id="pausePlay">⏸️ Pause</button>
             <button id="refreshBtn">🔄 Refresh</button>
+            <button id="fullscreenBtn">⛶ Fullscreen</button>
             <label for="opmlUpload" class="opml-button" title="Import OPML file from your RSS reader">
                 📥 Import OPML
                 <input type="file" id="opmlUpload" accept=".opml,.xml">
@@ -526,6 +518,7 @@
         const themeToggle = document.getElementById('themeToggle');
         const pausePlayBtn = document.getElementById('pausePlay');
         const refreshBtn = document.getElementById('refreshBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
         const mainSpeedSlider = document.getElementById('mainSpeedSlider');
         const mainSpeedValue = document.getElementById('mainSpeedValue');
         const topSpeedSlider = document.getElementById('topSpeedSlider');
@@ -907,6 +900,50 @@
         refreshBtn.addEventListener('click', () => {
             fetchAllFeeds();
         });
+
+        // Fullscreen toggle
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                document.documentElement.requestFullscreen().then(() => {
+                    document.body.classList.add('fullscreen-mode');
+                    fullscreenBtn.textContent = '⛶ Exit Fullscreen';
+                }).catch(err => {
+                    console.error('Error entering fullscreen:', err);
+                });
+            } else {
+                // Exit fullscreen
+                document.exitFullscreen().then(() => {
+                    document.body.classList.remove('fullscreen-mode');
+                    fullscreenBtn.textContent = '⛶ Fullscreen';
+                }).catch(err => {
+                    console.error('Error exiting fullscreen:', err);
+                });
+            }
+        });
+
+        // Detect F11 fullscreen and manual fullscreen changes
+        function checkFullscreenState() {
+            // Check if in fullscreen (works for both F11 and Fullscreen API)
+            const isFullscreen = window.innerHeight === screen.height || document.fullscreenElement;
+
+            if (isFullscreen) {
+                document.body.classList.add('fullscreen-mode');
+                fullscreenBtn.textContent = '⛶ Exit Fullscreen';
+            } else {
+                document.body.classList.remove('fullscreen-mode');
+                fullscreenBtn.textContent = '⛶ Fullscreen';
+            }
+        }
+
+        // Listen for fullscreen changes (catches Fullscreen API and F11)
+        document.addEventListener('fullscreenchange', checkFullscreenState);
+        document.addEventListener('webkitfullscreenchange', checkFullscreenState);
+        document.addEventListener('mozfullscreenchange', checkFullscreenState);
+        document.addEventListener('MSFullscreenChange', checkFullscreenState);
+
+        // Listen for window resize (catches F11)
+        window.addEventListener('resize', checkFullscreenState);
 
         // Helper function to restart animation
         function restartAnimation(element) {
