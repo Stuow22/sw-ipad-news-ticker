@@ -804,10 +804,10 @@
             const topHeadlines = otherHeadlines.filter((_, index) => index % 2 === 1);
             
             // Limit headlines to control scroll speed - cap at reasonable numbers
-            const maxMainItems = 10;
-            const maxTopItems = 10;
-            const maxBottomItems = 20;
-            const maxIndividualItems = 15;
+            const maxMainItems = 50;
+            const maxTopItems = 50;
+            const maxBottomItems = 75;
+            const maxIndividualItems = 30;
             
             // Use Daily Mail for bottom, ensure we have content for all layers
             const safeMainHeadlines = (mainHeadlines.length > 0 ? mainHeadlines : otherHeadlines.length > 0 ? otherHeadlines : headlines).slice(0, maxMainItems);
