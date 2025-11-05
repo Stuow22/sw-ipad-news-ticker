@@ -186,7 +186,7 @@
                 transform: translate3d(0, 0, 0); /* Use translate3d for GPU */
             }
             100% {
-                transform: translate3d(-50%, 0, 0); /* Use translate3d for GPU */
+                transform: translate3d(-33.333%, 0, 0); /* Move 1/3 for tripled content */
             }
         }
 
@@ -818,11 +818,11 @@
             const mainHeadlines = otherHeadlines.filter((_, index) => index % 2 === 0);
             const topHeadlines = otherHeadlines.filter((_, index) => index % 2 === 1);
             
-            // Limit headlines to control scroll speed - cap at reasonable numbers
-            const maxMainItems = 50;
-            const maxTopItems = 50;
-            const maxBottomItems = 75;
-            const maxIndividualItems = 30;
+            // Show all available headlines - users want to see everything from 12 feeds
+            const maxMainItems = 500;
+            const maxTopItems = 500;
+            const maxBottomItems = 500;
+            const maxIndividualItems = 100;
             
             // Use Daily Mail for bottom, ensure we have content for all layers
             const safeMainHeadlines = (mainHeadlines.length > 0 ? mainHeadlines : otherHeadlines.length > 0 ? otherHeadlines : headlines).slice(0, maxMainItems);
