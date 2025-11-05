@@ -783,11 +783,11 @@
             
             console.log(`Filtering with Daily Mail URL: ${CONFIG.dailyMailUrl}`);
             
-            // Filter headlines to last 24 hours for main tickers
-            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            const recentHeadlines = headlines.filter(h => h.pubDate >= twentyFourHoursAgo);
-            
-            console.log(`Total headlines: ${headlines.length}, Recent (24h): ${recentHeadlines.length}`);
+            // Filter headlines to last 5 days for main tickers (prioritizes newest first)
+            const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+            const recentHeadlines = headlines.filter(h => h.pubDate >= fiveDaysAgo);
+
+            console.log(`Total headlines: ${headlines.length}, Recent (5 days): ${recentHeadlines.length}`);
             
             // Use recent headlines for main tickers, all headlines for background
             const headlinesToUse = recentHeadlines.length > 0 ? recentHeadlines : headlines;
