@@ -11,7 +11,8 @@
     "https://feeds.arstechnica.com/arstechnica/index/",
     "https://technology.blog.gov.uk/feed/",
     "https://feeds.feedburner.com/TechDigest",
-    "https://www.computerworld.com/feed/"
+    "https://www.computerworld.com/feed/",
+    "https://tldr.tech/api/rss/tech"
   ],
   "dailyMailUrl": "https://www.dailymail.co.uk/articles.rss",
   "refreshInterval": 600000,
